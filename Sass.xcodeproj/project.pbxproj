@@ -467,7 +467,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cp -R -f \"$BUILD_DIR/$CONFIGURATION/$PRODUCT_NAME.$WRAPPER_EXTENSION\" \"$HOME/Library/Application Support/Coda/Plug-ins\"";
+			shellScript = "cp -R -f \"$BUILD_DIR/$CONFIGURATION/$PRODUCT_NAME.$WRAPPER_EXTENSION\" \"$HOME/Library/Application Support/Coda 2/Plug-ins\"";
 		};
 /* End PBXShellScriptBuildPhase section */
 
