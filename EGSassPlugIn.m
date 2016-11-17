@@ -51,7 +51,7 @@
 {
     NSString *file = [textView path];
     if ([self isFileScss:file]) {
-        for (NSString* scssFile in [self scssFilesForScssFile:file]) {
+        for (NSString* scssFile in [self scssFilesForScssFile:file withSearchPath:[_controller siteLocalPath]]) {
             [self generateCssForScssFile:scssFile];
         }
     }
@@ -81,6 +81,44 @@
 	return [[scssFile lastPathComponent] hasPrefix:@"_"];
 }
 
+- (NSArray*)scssFilesForSccsRootDirectory:(NSString*) rootDirectory
+{
+	NSMutableArray* files = [[NSMutableArray alloc] init];
+	NSRegularExpression* isSassFile = [NSRegularExpression regularExpressionWithPattern:@"^[^_]*.s[ca]ss$" options:NSRegularExpressionCaseInsensitive error:nil];
+	// http://stackoverflow.com/questions/5749488/iterating-through-files-in-a-folder-with-nested-folders-cocoa
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	NSURL *directoryURL = [NSURL fileURLWithPath:rootDirectory isDirectory:YES]; // URL pointing to the directory you want to browse
+	NSArray *keys = [NSArray arrayWithObject:NSURLIsDirectoryKey];
+	
+	NSDirectoryEnumerator *enumerator = [fileManager
+										 enumeratorAtURL:directoryURL
+										 includingPropertiesForKeys:keys
+										 options:0
+										 errorHandler:^(NSURL *url, NSError *error) {
+											 // Handle the error.
+											 // Return YES if the enumeration should continue after the error.
+											 return YES;
+										 }];
+	
+	for (NSURL *url in enumerator) {
+		NSError *error;
+		NSNumber *isDirectory = nil;
+		if (! [url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:&error]) {
+			// handle error
+		}
+		else if (! [isDirectory boolValue]) {
+			// No error and it’s not a directory; do something with the file
+			NSString *fileName = [[url absoluteString] lastPathComponent];
+			
+			if([isSassFile numberOfMatchesInString:fileName options:0 range:NSMakeRange(0, [fileName length])] ) {
+				[files addObject:[url path]];
+			}
+		}
+	}
+	
+	return files;
+}
+
 - (NSArray*)scssFilesForScssDirectory:(NSString*)scssDirectory
 {
 	NSString *pattern = @"[!_]*.s[ca]ss";
@@ -103,10 +141,14 @@
 	return paths;
 }
 
-- (NSArray*)scssFilesForScssFile:(NSString*)scssFile
+- (NSArray*)scssFilesForScssFile:(NSString*)scssFile withSearchPath:(NSString*) searchPath;
 {
 	if (![self isScssFileScssPartial:scssFile]) {
 		return [NSArray arrayWithObject:scssFile];
+	}
+	
+	if(searchPath) {
+		return [self scssFilesForSccsRootDirectory:searchPath];
 	}
 	
 	return [self scssFilesForScssDirectory:[scssFile stringByDeletingLastPathComponent]];
